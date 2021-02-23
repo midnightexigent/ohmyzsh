@@ -272,3 +272,26 @@ alias gops='cd $GOPATH/src'
 alias gor='go run'
 alias got='go test'
 alias gov='go vet'
+
+function go-upgrade() {
+    local LATEST=$(curl -s 'https://golang.org/dl/?mode=json' | jq -r '.[0].version')
+    local INSTALLED=$(go version | awk '{ print $3 }')
+    if [[ ${INSTALLED} == ${LATEST} ]]; then
+        echo Go is up to date, running ${LATEST} >&2
+        return
+    fi
+    echo Upgrading Go from ${INSTALLED} to ${LATEST} >&2
+    local GOLANG=https://dl.google.com/go/${LATEST}.linux-amd64.tar.gz
+    local TAR=$(basename $GOLANG)
+    if [[ -z ${GOROOT} ]]; then
+        echo GOROOT is not defined. Is go installed?
+        return
+    fi
+
+    (
+        cd $(dirname ${GOROOT})
+        echo Downloading and extracting: $GOLANG >&2
+        wget -q $GOLANG && rm -rf go && tar xvfz ${TAR}
+    )
+}
+
